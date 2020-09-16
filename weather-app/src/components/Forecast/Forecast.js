@@ -2,30 +2,53 @@ import React, { useState } from 'react';
 import Conditions from '../Conditions/Conditions';
 import classes from './Forecast.module.css'
 
+
 const Forecast = () => {
   let [responseObj, setResponseObj] = useState({})
   let [city, setCity] = useState(' ');
   let [unit, setUnit] = useState('imperial');
+  let [error, setError] = useState(false);
+  let [loading, setLoading] = useState(false)
 
-  const uriEncodedCity = encodeURIComponent(city)
+  // const uriEncodedCity = encodeURIComponent(city)
 
   const getForecast = (e) => {
     e.preventDefault();
+
+    if (city.length === 0) {
+      return setError(true);
+    }
+    // Clear state in preparation for new data
+    setError(false);
+    setResponseObj({});
+
+    setLoading(true);
+
+    const uriEncodedCity = encodeURIComponent(city)
+
     // weather data fetch function will go here
       fetch(`https://community-open-weather-map.p.rapidapi.com/weather?units=${unit}&q=${uriEncodedCity}`, {
     "method": "GET",
     "headers": {
       "x-rapidapi-host": "community-open-weather-map.p.rapidapi.com",
-      "x-rapidapi-key": "54fa24106fmsha3a6cb723259e69p1fe9a0jsn070c25c51541"
+                  "x-rapidapi-key":
+      process.env.REACT_APP_API_KEY
       }
     })
     .then(response => response.json ())
     .then(response => {
+      if (response.cod !== 200) {
+        throw new Error()
+      }
+
       setResponseObj(response)
-      console.log(response);
+      setLoading(false);
+      // console.log(response);
     })
     .catch(err => {
-      console.log(err);
+      setError(true)
+      setLoading(false);
+      console.log(err.message);
     });
   }
   return (
@@ -68,7 +91,10 @@ const Forecast = () => {
           Get Forecast
           </button>
       </form>
-      <Conditions responseObj={responseObj}/>
+      <Conditions responseObj={responseObj}
+      error={error} new
+      loading={loading}
+      />
     </div>
   )
 }
